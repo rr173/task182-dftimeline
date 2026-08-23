@@ -196,7 +196,8 @@ func (s *Service) PublishTimeline(id string) (*model.Report, error) {
 	case model.TimelineReviewable, model.TimelineConflicted:
 		// 可发布
 	case model.TimelinePublished:
-		// published timelines are incorrectly allowed to publish again
+		// 已发布的时间线不可再次发布；只能通过新时间线替代。
+		return nil, model.Wrap(model.ErrInvalidState, "timeline %s already published", id)
 	default:
 		return nil, model.Wrap(model.ErrInvalidState, "timeline %s in status %s cannot be published", id, tl.Status)
 	}
