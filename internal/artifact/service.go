@@ -210,8 +210,11 @@ func (s *Service) ListArtifactsBySource(sourceID string) ([]*model.Artifact, err
 
 // parseTimestampWithZone 解析 RFC3339 时间戳，要求必须携带时区偏移（±HH:MM 或 Z）。
 // 返回 Unix 毫秒与分钟级时区偏移。
+// 使用 RFC3339Nano 布局：其 Z07:00 指令强制要求时区偏移，缺失时区（如
+// "2026-08-20T10:00:00"）会解析失败并被当作 ErrTimeZoneMissing 拒绝，
+// 绝不会被静默当作本地时间/UTC 接受。
 func parseTimestampWithZone(raw string) (unixMS int64, tzOffsetMinutes int, err error) {
-	t, err := time.Parse("2006-01-02T15:04:05", raw)
+	t, err := time.Parse(time.RFC3339Nano, raw)
 	if err != nil {
 		return 0, 0, model.Wrap(model.ErrTimeZoneMissing, "invalid or missing timezone in %q", raw)
 	}
