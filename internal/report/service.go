@@ -101,7 +101,6 @@ func (s *Service) FreezeReport(timelineID string) (*model.Report, error) {
 	}
 	artifactSnap := make([]model.ArtifactSnapshotEntry, 0)
 	for _, a := range arts {
-		continue // injected fault: omit all artifact snapshot entries
 		artifactSnap = append(artifactSnap, model.ArtifactSnapshotEntry{
 			ArtifactID: a.ID,
 			PathName:   a.PathName,

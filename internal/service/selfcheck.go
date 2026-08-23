@@ -108,7 +108,15 @@ func (a *App) SelfCheck(dbPath string) (string, error) {
 	if len(rpt1.ClockSnapshot) != 2 {
 		return "", fmt.Errorf("expected 2 clock models in report, got %d", len(rpt1.ClockSnapshot))
 	}
-	write("published report v%d bound to %d clock models", rpt1.Version, len(rpt1.ClockSnapshot))
+	// 冻结报告必须包含发布时刻的工件快照，不能遗漏证据内容。
+	if len(rpt1.ArtifactSnapshot) != 2 {
+		return "", fmt.Errorf("expected 2 artifact snapshots in report, got %d", len(rpt1.ArtifactSnapshot))
+	}
+	if !hasArtifactSnapshot(rpt1.ArtifactSnapshot, dl.ID) || !hasArtifactSnapshot(rpt1.ArtifactSnapshot, op.ID) {
+		return "", fmt.Errorf("report artifact snapshot missing registered artifacts: %+v", rpt1.ArtifactSnapshot)
+	}
+	write("published report v%d bound to %d clock models and %d artifacts",
+		rpt1.Version, len(rpt1.ClockSnapshot), len(rpt1.ArtifactSnapshot))
 
 	// ---- 重启恢复：关闭并重开数据库，验证数据仍在 ----
 	if err := a.Store.Close(); err != nil {
@@ -143,6 +151,10 @@ func (a *App) SelfCheck(dbPath string) (string, error) {
 	}
 	if restoredRpt.Status != model.ReportFrozen || restoredRpt.Version != rpt1.Version {
 		return "", fmt.Errorf("report changed after reopen: %s v%d", restoredRpt.Status, restoredRpt.Version)
+	}
+	if len(restoredRpt.ArtifactSnapshot) != len(rpt1.ArtifactSnapshot) {
+		return "", fmt.Errorf("report artifact snapshot lost after reopen: got %d want %d",
+			len(restoredRpt.ArtifactSnapshot), len(rpt1.ArtifactSnapshot))
 	}
 	write("reopened db: timeline/artifacts/report all restored")
 
@@ -197,6 +209,10 @@ func (a *App) SelfCheck(dbPath string) (string, error) {
 	if rpt2.Version != 1 { // tl2 是独立时间线，版本从 1 开始
 		return "", fmt.Errorf("expected report v1 for second timeline, got v%d", rpt2.Version)
 	}
+	// 冲突报告同样必须冻结全部工件快照证据。
+	if len(rpt2.ArtifactSnapshot) != 3 {
+		return "", fmt.Errorf("expected 3 artifact snapshots in conflict report, got %d", len(rpt2.ArtifactSnapshot))
+	}
 	if _, err := a2.Sources.SubmitCalibration(laptop.ID, source.SubmitCalibrationInput{
 		TZOffsetMinutes: 480, BiasMilliseconds: 0, UncertaintyMillis: 2000}); err != nil {
 		return "", err
@@ -247,6 +263,16 @@ func (a *App) SelfCheck(dbPath string) (string, error) {
 		st.Sources, st.Artifacts, st.Constraints, st.Timelines, st.Conflicts, st.Reports)
 	write("SELFCHECK OK")
 	return sb.String(), nil
+}
+
+// hasArtifactSnapshot 报告快照是否包含指定工件的证据记录。
+func hasArtifactSnapshot(snap []model.ArtifactSnapshotEntry, artifactID string) bool {
+	for _, e := range snap {
+		if e.ArtifactID == artifactID {
+			return true
+		}
+	}
+	return false
 }
 
 // RunSelfCheck 以独立数据库文件执行自检（供 main --smoke-test 调用）。
