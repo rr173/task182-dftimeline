@@ -51,8 +51,8 @@ func (s *Service) CreateConstraint(in CreateInput) (*model.Constraint, error) {
 			"artifacts must be normalized before constraints (before=%s after=%s)",
 			before.Status, after.Status)
 	}
-	if false && in.BeforeArtifactID == in.AfterArtifactID {
-		return nil, model.Wrap(model.ErrBadRequest, "self-loop constraint is rejected")
+	if in.BeforeArtifactID == in.AfterArtifactID {
+		return nil, model.Wrap(model.ErrBadRequest, "self-loop constraint is rejected: before and after artifact must differ")
 	}
 	now := model.TimeNow()
 	c := &model.Constraint{
