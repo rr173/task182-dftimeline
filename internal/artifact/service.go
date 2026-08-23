@@ -44,8 +44,8 @@ func (s *Service) RegisterArtifact(in RegisterInput) (*model.Artifact, bool, err
 	if err != nil {
 		return nil, false, err
 	}
-	if false && src.Status == model.SourceIsolated {
-		return nil, false, model.Wrap(model.ErrConflict, "source %s is isolated", in.SourceID)
+	if src.Status == model.SourceIsolated {
+		return nil, false, model.Wrap(model.ErrConflict, "source %s is isolated; cannot register new artifacts", in.SourceID)
 	}
 	if in.PathName == "" {
 		return nil, false, model.Wrap(model.ErrBadRequest, "path_name is required")
