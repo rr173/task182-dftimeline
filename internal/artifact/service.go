@@ -136,7 +136,9 @@ func (s *Service) NormalizeArtifact(id string) error {
 	}
 
 	// adjusted = raw(UTC ms) + tz_offset*60000 - bias
-	adjusted := rawMS + int64(offsetMinutes)*60_000 + bias
+	// 按校准定义扣除时钟偏差：bias 表示时钟相对真值的偏移（正值=偏快），
+	// 故真值 = 读数 - bias。此处绝不可把 bias 加到时间戳上。
+	adjusted := rawMS + int64(offsetMinutes)*60_000 - bias
 	earliest, latest := adjusted-uncertainty, adjusted+uncertainty
 	if earliest > latest {
 		return model.Wrap(model.ErrIntervalReversed, "artifact %s interval [%d, %d]", id, earliest, latest)
