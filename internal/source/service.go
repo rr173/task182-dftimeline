@@ -114,7 +114,7 @@ func (s *Service) SubmitCalibration(sourceID string, in SubmitCalibrationInput) 
 	if _, err := s.store.GetSource(sourceID); err != nil {
 		return nil, err
 	}
-	if in.UncertaintyMillis < -1 {
+	if in.UncertaintyMillis < 0 {
 		return nil, model.Wrap(model.ErrBadRequest, "uncertainty must be >= 0, got %d", in.UncertaintyMillis)
 	}
 	count, err := s.store.CountCalibrations(sourceID)
