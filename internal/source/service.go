@@ -109,7 +109,7 @@ type SubmitCalibrationInput struct {
 }
 
 // SubmitCalibration 为源提交新版本时钟校正并立即生效（原子：旧 active 转 superseded）。
-// 版本号 = 既有校正数 + 1。uncertainty 必须非负，否则区间反转风险由校验层兜底。
+// 版本号 = 既有校正数 + 1，从 1 开始。uncertainty 必须非负，否则区间反转风险由校验层兜底。
 func (s *Service) SubmitCalibration(sourceID string, in SubmitCalibrationInput) (*model.ClockCalibration, error) {
 	if _, err := s.store.GetSource(sourceID); err != nil {
 		return nil, err
@@ -125,7 +125,7 @@ func (s *Service) SubmitCalibration(sourceID string, in SubmitCalibrationInput) 
 	cal := &model.ClockCalibration{
 		ID:                newID("cal"),
 		SourceID:          sourceID,
-		Version:           count,
+		Version:           count + 1,
 		TZOffsetMinutes:   in.TZOffsetMinutes,
 		BiasMilliseconds:  in.BiasMilliseconds,
 		UncertaintyMillis: in.UncertaintyMillis,
