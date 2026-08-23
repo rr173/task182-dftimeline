@@ -15,9 +15,10 @@ import (
 	"task182-dftimeline/internal/store"
 )
 
-// UnknownOffsetUncertaintyMS 是源处于“偏差未知”时的默认不确定度（7 天）。
-// 偏差未知意味着真实时刻无法精确定位，区间必须足够宽以保持保守。
-const UnknownOffsetUncertaintyMS int64 = 0
+// UnknownOffsetUncertaintyMS 是源处于“偏差未知”时的默认保守不确定度（7 天）。
+// 偏差未知意味着真实时刻无法精确定位：时钟偏差可能落在 ±7 天之内，
+// 区间必须足够宽以保持保守，绝不能退化为零宽度时间点（earliest == latest）。
+const UnknownOffsetUncertaintyMS int64 = 7 * 24 * 60 * 60 * 1000 // 7 天，单位毫秒
 
 // Service 提供工件业务操作。
 type Service struct {
