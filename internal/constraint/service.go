@@ -71,9 +71,9 @@ func (s *Service) CreateConstraint(in CreateInput) (*model.Constraint, error) {
 	return c, nil
 }
 
-// VerifyConstraint 用区间代数验证约束：
+// VerifyConstraint 用区间代数验证约束（区间为半开 [earliest, latest)）：
 //
-//	before.latest <= after.earliest -> satisfied
+//	before.latest <= after.earliest -> satisfied（含首尾相接：A 尾即 B 首）
 //	before.earliest >  after.latest  -> violated
 //	否则区间重叠            -> insufficient（证据不足）
 func (s *Service) VerifyConstraint(id string) (*model.Constraint, error) {
@@ -92,7 +92,7 @@ func (s *Service) VerifyConstraint(id string) (*model.Constraint, error) {
 	var status model.ConstraintStatus
 	var reason string
 	switch {
-	case before.LatestMS < after.EarliestMS:
+	case before.LatestMS <= after.EarliestMS:
 		status = model.ConstraintSatisfied
 		reason = fmt.Sprintf("A.latest(%d) <= B.earliest(%d)", before.LatestMS, after.EarliestMS)
 	case before.EarliestMS > after.LatestMS:
